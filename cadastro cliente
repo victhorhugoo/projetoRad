@@ -1,0 +1,63 @@
+import sqlite3 as conector
+
+#criar tabela cliente
+def criar_tabela_cliente():
+    #abertura da conexao
+    try:
+        conexao = conector.connect("C:/Banco_Aplicat_Python/restaurante.db")
+        cursor = conexao.cursor()
+        print('Conexao com o bando de dados realizado com sucesso!')
+    except conector.DatabaseError as err:
+        print('erro ao conectar com o banco de dados: ', err)
+    sql = '''CREATE TABLE IF NOT EXISTS cliente(
+                    cpf INTEGER PRIMARY KEY,
+                    nome TEXT NOT NULL,
+                    telefone TEXT NOT NULL,
+                    data_nascimento DATE NOT NULL,
+                    email TEXT NOT NULL, 
+                    picture TEXT NOT NULL
+                    );'''
+    print('Tabela produto foi criado com sucesso!')
+    cursor.execute(sql)
+    conexao.commit()
+
+    cursor.close()
+    conexao.close()
+
+#registrar novos clientes
+def registrar_clientes(cliente):
+    try:
+        conexao = conector.connect("C:/Banco_Aplicat_Python/restaurante.db")
+        cursor = conexao.cursor()
+        print('Conexao com o bando de dados realizado com sucesso!')
+    except conector.DatabaseError as err:
+        print('Erro ao cadastrar cliente! ', err)
+
+    sql = '''INSERT INTO cliente(
+                    cpf, 
+                    nome, 
+                    telefone, 
+                    data_nascimento, 
+                    email, 
+                    picture) VALUES (?,?,?,?,?,?),(cliente);'''
+    print('cliente cadastrado com sucesso!')
+    cursor.execute(sql)
+    conexao.commit()
+
+    cursor.close()
+    conexao.close()
+
+def view_clientes(cliente):
+    try:
+        conexao = conector.connect("C:/Banco_Aplicat_Python/restaurante.db")
+        cursor = conexao.cursor()
+        print('Conexão com o banco de dados realizada com sucesso!')
+    except conector.DatabaseError as err:
+        print('Erro ao ler a lista cliente', err)
+    
+    sql = '''SELECT * FROM cliente;'''
+    cursor.execute(sql)
+
+#chamando a função
+print('Abrindo uma conexão')
+criar_tabela_cliente()
