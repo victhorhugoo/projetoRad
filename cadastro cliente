@@ -12,37 +12,91 @@ def criar_tabela_cliente():
                     cpf INTEGER PRIMARY KEY NOT NULL,
                     nome TEXT NOT NULL,
                     telefone TEXT NOT NULL,
-                    data_nascimento DATE NOT NULL,
+                    data_nascimento INTEGER NOT NULL,
                     endereço TEXT NOT NULL, 
                     picture TEXT NOT NULL
                     );'''
-        sql2 = '''CREATE TABLE IF NOT EXISTS categoria(
-                    nome INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                    );'''
-        sql3 = '''CREATE TABLE IF NOT EXISTS produto(
-                    id INTEGER NOT NULL,
-                    nome TEXT NOT NULL,
-                    preço FLOAT NOT NULL,
-                    PRIMARY KEY (id),
-                    FOREING KEY(cliente) REFERENCES cliente(cpf),
-                    FOREING KEY(categoria) REFERENCES categoria(nome)
-                    );'''
         cursor.execute(sql1)
-        cursor.execute(sql2)
-        cursor.execute(sql3)
         conexao.commit()
-        print('Tabelas foram criadas com sucesso!')
+        print('Tabela cliente foi criada com sucesso!')
 
     except conector.DatabaseError as err:
-        print('erro ao conectar com o banco de dados: ', err)
+        print('erro ao criar tabela cliente: ', err)
 
     finally:
         if(conexao):    
             cursor.close()
             conexao.close()
 
-#registrar novos clientes
-def registrar_clientes():
+
+#criar tabela categoria
+def criar_tabela_categoria():
+    #abertura da conexao
+    try:
+        conexao = conector.connect("C:/Banco_Aplicat_Python/trabalhoPy.db")
+        cursor = conexao.cursor()
+        print('Conexao com o bando de dados realizado com sucesso!')
+    
+        sql = '''CREATE TABLE IF NOT EXISTS categoria(
+                    nome TEXT PRIMARY KEY AUTOINCREMENT NOT NULL
+                    );'''
+        cursor.execute(sql)
+        conexao.commit()
+        print('Tabela categoria foi criada com sucesso!')
+
+    except conector.DatabaseError as err:
+        print('erro ao criar tabela categoria: ', err)
+
+    finally:
+        if(conexao):    
+            cursor.close()
+            conexao.close()
+
+
+#criar tabela produto
+def criar_tabela_produto():
+    #abertura da conexao
+    try:
+        conexao = conector.connect("C:/Banco_Aplicat_Python/trabalhoPy.db")
+        cursor = conexao.cursor()
+        print('Conexao com o bando de dados realizado com sucesso!')
+    
+        sql = '''CREATE TABLE IF NOT EXISTS produto(
+                    id INTEGER NOT NULL,
+                    nome TEXT NOT NULL,
+                    preço FLOAT NOT NULL,
+                    cliente INTEGER NOT NULL,
+                    categoria TEXT NOT NULL,
+                    PRIMARY KEY (id),
+                    FOREIGN KEY(cliente) REFERENCES cliente(cpf),
+                    FOREIGN KEY(categoria) REFERENCES categoria(nome)
+                    );'''
+        cursor.execute(sql)
+        conexao.commit()
+        print('Tabela produto foi criada com sucesso!')
+
+    except conector.DatabaseError as err:
+        print('erro ao criar tabela produto: ', err)
+
+    finally:
+        if(conexao):    
+            cursor.close()
+            conexao.close()            
+
+# cadastrar cliente
+def cadastrar_cliente():
+    print("cadastrando")
+    cpf = int(input("informe o cpf: "))
+    nome = input("informe o seu nome: ")
+    telefone = int(input("insforme o telefone: "))
+    data_nascimento = int(input("informe a data de nascimento: "))
+    endereço = input("informe o endereço: ") 
+    picture = int(input("foto: "))
+    return cpf, nome, telefone, data_nascimento, endereço, picture
+
+
+#inserir dados de clientes
+def inserir_dados(cpf, nome, telefone, data_nascimento, endereço, picture):
     try:
         conexao = conector.connect("C:/Banco_Aplicat_Python/trabalhoPy.db")
         cursor = conexao.cursor()
@@ -53,12 +107,17 @@ def registrar_clientes():
                     telefone, 
                     data_nascimento, 
                     endereço, 
-                    picture) VALUES (?,?,?,?,?,?);'''
-        cursor.execute(sql)
-        print('cliente cadastrado com sucesso!')
+                    picture) VALUES (:cpf, :nome, :telefone, :data_nascimento, :endereço, :picture);'''
+        cursor.execute(sql, {"cpf": cpf,
+                             "nome": nome,
+                             "telefone": telefone,
+                             "data_nascimento": data_nascimento,
+                             "endereço": endereço,
+                             "picture": picture})
+        print('dados inseridos com sucesso!')
         conexao.commit()
     except conector.DatabaseError as err:
-        print('Erro ao cadastrar cliente! ', err)
+        print('Erro ao inserir dados! ', err)
     finally:
         if(conexao):
             cursor.close()
@@ -70,8 +129,17 @@ def alterar_dados():
         conexao = conector.connect("C:/Banco_Aplicat_Python/trabalhoPy.db")
         cursor = conexao.cursor()
 
-        comando1 = 'UPDATE cliente SET telefone=? WHERE cpf=:cpf;'
+        comando1 = 'UPDATE cliente SET nome=? WHERE cpf=:cpf;'
         cursor.execute(comando1,(True,))
+
+        comando2 = 'UPDATE cliente SET telefone=? WHERE cpf=:cpf;'
+        cursor.execute(comando2,(True,))
+
+        comando3 = 'UPDATE cliente SET data_nascimento=? WHERE cpf=:cpf;'
+        cursor.execute(comando3,(True,))
+
+        comando4 = 'UPDATE cliente SET endereço=? WHERE cpf=:cpf;'
+        cursor.execute(comando4,(True,))
 
         conexao.commit()
         print('Dados alterados')
@@ -125,8 +193,11 @@ def listar_clientes():
 
 #executando as funções
 criar_tabela_cliente()
-registrar_clientes()
+criar_tabela_categoria()
+criar_tabela_produto
+cpf, nome, telefone, data_nascimento, endereço, picture = cadastrar_cliente()
+inserir_dados(cpf, nome, telefone, data_nascimento, endereço, picture)
 alterar_dados()
-excluir_dados()
-listar_clientes()
+"""excluir_dados()
+listar_clientes() """
 print('concluido')
