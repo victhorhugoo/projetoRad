@@ -1,0 +1,254 @@
+import os
+import sqlite3 as conector
+import string
+from faker import Faker
+import datetime
+import random2 as random
+from datetime import datetime
+
+fake = Faker()
+HostDatabase = ('C:/Banco_Aplicat_Python/trabalhofinal.db')
+
+#abertura da conexao
+def conectar_banco():
+    try:
+        conexao = conector.connect(HostDatabase)
+        cursor = conexao.cursor()
+        print('Conectado com sucesso!')
+        return conexao, cursor
+    except conector.DatabaseError as err:
+        print('Erro ao conectar ao banco de dados. Verifique!', err)    
+        return None, None
+
+conexao, cursor = conectar_banco()
+
+#criar tabela cliente
+def criar_tabela_cliente():    
+    try:
+        sql = '''CREATE TABLE IF NOT EXISTS Cliente(
+                    cpf varchar(30),
+                    nome TEXT NOT NULL,
+                    telefone TEXT NOT NULL,
+                    data_nascimento DATE NOT NULL,
+                    endereco TEXT NOT NULL, 
+                    genero TEXT NOT NULL,
+                    PRIMARY KEY (cpf)
+                    );'''
+        cursor.execute(sql)
+        conexao.commit()
+        print('Tabela de Clientes criada com sucesso!')
+    except conector.DatabaseError as err:
+        print('Erro ao criar a tabela de Cliente. Verifique!', err)
+
+#criar tabela categoria
+def criar_tabela_categoria():
+    try:            
+        sql = '''CREATE TABLE IF NOT EXISTS Categoria(
+                    id INTEGER NOT NULL,
+                    nome TEXT NOT NULL, 
+                    PRIMARY KEY (id)
+                    );'''
+        cursor.execute(sql)
+        conexao.commit()
+        print('Tabela de Categoria criada com sucesso!')
+    except conector.DatabaseError as err:
+        print('Erro ao criar a tabela de Categoria. Verifique!', err)
+
+#criar tabela produto
+def criar_tabela_produto():
+    try:
+        sql = '''CREATE TABLE IF NOT EXISTS Produto(
+                    codigo INTEGER NOT NULL,
+                    nome TEXT NOT NULL,
+                    preço FLOAT NOT NULL,
+                    pedido INTEGER NOT NULL,
+                    categoria TEXT NOT NULL,
+                    PRIMARY KEY (codigo),
+                    FOREIGN KEY(pedido) REFERENCES Cliente(cpf),
+                    FOREIGN KEY(categoria) REFERENCES Categoria(id)
+                    );'''
+        cursor.execute(sql)
+        conexao.commit()
+        print('Sucesso ao criar a tabela de Produto!')
+    except conector.DatabaseError as err:
+        print('Erro ao criar a tabela de Produto. Verifique!', err)
+
+# Preencher os dados do cliente
+def preencher_dados_cliente():
+    print("Informe os dados do Cliente: ")
+
+    cpf = int(input("CPF: "))
+    nome = input("Nome: ")
+    telefone = input("Telefone: ")
+    data_nascimento = input("Data de nascimento: ")
+    data_nascimento = datetime.strptime(data_nascimento, "%d-%m-%Y")
+    endereco = input("Endereço: ") 
+    genero = input("genero: ")          
+    
+    return cpf, nome, telefone, data_nascimento, endereco, genero
+
+#inserir dados de clientes
+def inserir_dados_cliente(cpf, nome, telefone, data_nascimento, endereco, genero):
+    try:
+        sql = '''INSERT INTO Cliente(
+                    cpf, 
+                    nome, 
+                    telefone, 
+                    data_nascimento, 
+                    endereco, 
+                    genero
+                ) 
+                VALUES 
+                (
+                    :cpf, 
+                    :nome, 
+                    :telefone, 
+                    :data_nascimento, 
+                    :endereco, 
+                    :genero
+                );'''
+        
+        cursor.execute(sql, {"cpf": cpf,
+                             "nome": nome,
+                             "telefone": telefone,
+                             "data_nascimento": data_nascimento,
+                             "endereco": endereco,
+                             "genero": genero})
+
+        print('Cliente inserido com sucesso!')
+        conexao.commit()
+
+        print('Estes são os dados inseridos: ')
+        cursor.execute('SELECT * FROM cliente WHERE cpf = ?', (cpf,))
+        resultados = cursor.fetchall()
+
+        for resultado in resultados:
+            print(resultado)
+
+    except conector.DatabaseError as err:
+        print('Erro ao incluir Cliente. Verifique!', err)
+
+    print()
+    
+def buscar_cliente_cadastrado(cpf):
+    try:
+        sql = '''SELECT * FROM Cliente where cpf = ?'''
+        cursor.execute(sql, (cpf,))
+        #recuperação de dados
+        registros = cursor.fetchall()
+
+        if registros:
+            for reg in registros:
+                cpf, nome, telefone, data_nascimento, endereco, genero = reg        
+
+            print('Cliente ',nome, ' encontrado.\n')
+            return cpf, nome, telefone, data_nascimento, endereco, genero       
+        else:
+            print('Nenhum cliente encontrado com esse CPF: ?', cpf)
+            return None, None, None, None, None, None
+    except conector.DatabaseError as err:
+      print('Erro',err)    
+      return None, None, None, None, None, None
+
+#alterar dados
+def alterar_dados_cliente(cpf, nome, telefone, data_nascimento, endereco, genero):
+    try:
+        cursor.execute('Select * from cliente where cpf = ?', (cpf,))
+        dados_anteriores = cursor.fetchall()        
+        
+        comando = 'UPDATE Cliente SET nome = ?, telefone = ?, data_nascimento = ?, endereco = ? WHERE cpf = ?;'
+        cursor.execute(comando,(cpf, nome, telefone, data_nascimento, endereco, genero))
+        
+        conexao.commit()
+        print('Dados alterados com sucesso!\n')
+
+        print('Estes são os dados anteriores: ')
+        for dado_anterior in dados_anteriores:
+            print(dado_anterior)        
+
+        print()
+
+        print('Estes são os dados atuais: ')        
+        cursor.execute('Select * from cliente where cpf = ?', (cpf,))
+        dados_atuais = cursor.fetchall()        
+
+        for dado_atual in dados_atuais:
+            print(dado_atual)        
+
+        print()
+
+    except conector.DatabaseError as err:
+        print('Erro ao alterar dados. Verifique!', err)
+    
+#excluindo dados
+def excluir_cliente(cpf):
+    try:        
+        comando = 'DELETE FROM Cliente WHERE cpf = ? ;'
+        cursor.execute(comando,(cpf,))
+        conexao.commit()
+        print('Cliente excluido com sucesso')
+    except conector.DatabaseError as err:
+        print('Erro ao excluir. Verifique ', err)
+
+#listando os clientes
+def listar_clientes():
+    try:    
+        #execução de comandos sql
+        sql = '''SELECT * FROM Cliente;'''
+        cursor.execute(sql)
+        #recuperação de dados
+        registros = cursor.fetchall()
+        print('Tipo retornado: ', type(registros))
+
+        #saída de dados sem formatação
+        if registros:
+            for reg in registros:
+                cpf, nome, telefone, data_nascimento, endereco, genero = reg
+                print('CPF: ',cpf,'Nome: ',nome,'Telefone: ',telefone,'Data de nascimento: ',data_nascimento,'Endereço: ',endereco,'genero: ',genero)
+        else:
+            print('Nenhum cliente encontrado com o CPF: ?', (cpf,))
+    except conector.DatabaseError as err:
+        print('Erro ao mostrar lista', err)
+      
+criar_tabela_cliente()
+criar_tabela_categoria()
+criar_tabela_produto()
+'''while True:
+    print("Menu:")
+    print("1. Criar tabela cliente")
+    print("2. Criar tabela categoria")
+    print("3. Criar tabela produto")
+    print("4. Preencher dados do cliente")
+    print("5. Inserir dados do cliente")
+    print("6. Alterar dados do cliente")
+    print("7. Excluir cliente")
+    print("8. Carregar cliente cadastrado")
+    print("0. Sair")
+
+    opcao = input("Escolha uma opção: ")
+
+    if opcao == "1":
+        criar_tabela_cliente()
+    elif opcao == "2":
+        criar_tabela_categoria()
+    elif opcao == "3":
+        criar_tabela_produto()
+    elif opcao == "4":
+        cpf, nome, telefone, data_nascimento, endereco, picture = preencher_dados_cliente()
+    elif opcao == "5":
+        inserir_dados_cliente(cpf, nome, telefone, data_nascimento, endereco, picture)
+    elif opcao == "6":
+        alterar_dados_cliente(cpf, nome, telefone, data_nascimento, endereco, picture)
+    elif opcao == "7":
+        cpfL = input('Informe o CPF do cliente que deseja Excluir: ')
+        excluir_cliente(cpfL)        
+    elif opcao == "8":
+        cpfL = input('Informe o CPF do cliente que deseja carregar: ')
+        cpf, nome, telefone, data_nascimento, endereco, picture = buscar_cliente_cadastrado(cpfL)
+    elif opcao == "0":
+        print("Saindo do programa...")
+        break
+    else:
+        print("Opção inválida. Tente novamente.")'''
+
+
