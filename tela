@@ -1,0 +1,396 @@
+from tkinter.ttk import *
+from tkinter import*
+from tkinter import ttk
+from tkinter import messagebox
+from tkinter import filedialog as fd
+import tkcalendar
+import customtkinter as ctk
+#importando o pilow
+from PIL import ImageTk, Image #instalado utilizando o comando pip install
+#importando calendário
+from tkcalendar import Calendar, DateEntry #instalando pelo comando pip install
+from datetime import date
+from test import *
+
+
+#configuração da página
+class App(ctk.CTk): #classe principal
+    def __init__(self): 
+        super().__init__()
+        self.windows_config()
+        self.tema_config()
+        self.frontEnd()
+        self.mostrar_alunos()
+
+    def windows_config(self): #janela principal
+        self.title("Sistema de gestão") #título da página
+        self.geometry("800x730") #tamanho da tela inicial
+        self._set_appearance_mode("System") #selecionar a aparência do tema do sistema
+        self.minsize(width=800, height=600) #determina o tamanho mínimo para a tela
+
+    def tema_config(self): #Configurção do tema do sistema
+        self.switch_var = ctk.StringVar(value="off") #variável do tipo string, onde o switch é uma estrutura de controle de fluxo que permite executar diferentes blocos de código na mesma função, neste caso mudar para o modo claro e o escuro.
+        def set_tema(): #função que muda o tema
+            if self.switch_var.get() == 'Dark': #Pega o valor e se o valor de switch_var for igual a "on", muda para o modo dark
+                ctk.set_appearance_mode("Dark")
+            elif self.switch_var.get() == 'Light': #Pega o valor r se o valor de switch_var for igual a "off", muda para o modo light
+                ctk.set_appearance_mode("Light")
+            else: #Se não for nenhum dos modos, ele usa o system
+                ctk.set_appearance_mode("System")
+
+        self.switch = ctk.CTkSwitch(self, text="Tema", variable=self.switch_var, onvalue="Dark", offvalue="Light", command=set_tema)    
+        self.switch.place(x=25, y=20) #Definindo o tamanho do switch
+
+
+    # Tabela Alunos
+    def mostrar_alunos(self):    
+        # creating a treeview with dual scrollbars
+        list_header = ['id','Nome','email','Telefone','Genero','Data', 'Endereço','Bairro']
+
+        # view all students
+        df_list = Sistema_De_Vendas.exibir_clientes()
+
+        tree_cliente = ttk.Treeview(self.tabview.tab("Clientes"), selectmode="extended",columns=list_header, show="headings")
+        tree_cliente.place(x=30, y=430)
+
+            # vertical scrollbar
+        vsb = ttk.Scrollbar(self.tabview.tab("Clientes"), orient="vertical", command=tree_cliente.yview)
+        # horizontal scrollbar
+        hsb = ttk.Scrollbar(self.tabview.tab("Clientes"), orient="horizontal", command=tree_cliente.xview)
+
+        tree_cliente.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+        '''self.tree_aluno.grid(column=0, row=1, sticky='nsew')
+	    self.vsb.grid(column=1, row=1, sticky='ns')
+	    self.hsb.grid(column=0, row=2, sticky='ew')'''
+        self.tabview.tab("Clientes").grid_rowconfigure(0, weight=12)
+
+        hd=["nw","nw","nw","center","center","center","center","center","center"]
+        h=[60,150,150,70,70,70,120,100,100]
+        n=0
+
+        for col in list_header:
+            tree_cliente.heading(col, text=col.title(), anchor=NW)
+                # adjust the column's width to the header string
+            tree_cliente.column(col, width=h[n],anchor=hd[n])
+            n+=1
+
+        for item in df_list:
+            tree_cliente.insert('', 'end', values=item)
+
+
+    def frontEnd(self):
+        self.tt = ctk.CTkLabel(self, text="Sistema de gestão", font=("Century Gothic bold", 30))
+        self.tt.pack(pady=20)
+        self.tabview = ctk.CTkTabview(self, 
+                                      width=700, #Largura
+                                      height=800, #Altura
+                                      corner_radius=8, #Aredondamento
+                                      border_width=2, #Largura da borda
+                                      segmented_button_fg_color="grey", #Cor do botão
+                                      segmented_button_selected_color="#008B8B",
+                                      segmented_button_selected_hover_color="#111",
+                                      segmented_button_unselected_color="#333")
+        
+        self.tabview.pack(pady=10) #Adicionando as tabs
+        self.tabview.add("Pedidos") 
+        self.tabview.add("Produtos")
+        self.tabview.add("Categorias")
+        self.tabview.add("Clientes")
+        #Definindo a posição das tabs, configurando as colunas
+        self.tabview.tab("Pedidos").grid_columnconfigure(1, weight=100) 
+        self.tabview.tab("Produtos").grid_columnconfigure(1, weight=1)
+        self.tabview.tab("Categorias").grid_columnconfigure(1, weight=1)
+        self.tabview.tab("Clientes").grid_columnconfigure(1, weight=1)
+
+        global imagem, imagem_string, l_imagem
+
+        #------------criando funções para o CRUD-------------------------
+        #função adicionar
+        def adicionar():
+            global imagem, imagem_string, l_imagem
+
+            #obtendo valores
+            nome = self.nome_entry.get()
+            email = self.email_entry.get()
+            telefone = self.telefone_entry.get()
+            genero = self.genero_combobox.get()
+            data = self.data_nascimento_entry.get()
+            endereco = self.endereco_entry.get()
+            bairro = self.bairro_entry.get()
+            #img = imagem_string
+
+            lista = [nome, email, telefone, genero, data, endereco, bairro]
+
+            #verificando se a lista tem campos não preenchidos
+            for i in lista:
+                if i=='':
+                    messagebox.showerror('Erro', 'Preencha todos os campos')
+                    return
+            
+            Sistema_De_Vendas.registrar_clientes(lista)
+
+            #deletando
+            self.nome_entry.delete(0, END)
+            self.email_entry.delete(0, END)
+            self.telefone_entry.delete(0, END)
+            #self.genero_combobox.delete(0, END)
+            self.data_nascimento_entry.delete(0, END)
+            self.endereco_entry.delete(0, END)
+            self.bairro_entry.delete(0, END)
+
+            mostrar_alunos = app.mostrar_alunos()
+            mostrar_alunos()
+
+            # limpando os campos de entradas
+            self.nome_entry.delete(0,END)
+            self.email_entry.delete(0,END)
+            self.telefone_entry.delete(0,END)
+            self.genero_combobox.delete(0,END)
+            self.data_nascimento_entry.delete(0,END)
+            self.endereco_entry.delete(0,END)
+            self.bairro_entry.delete(0,END)
+
+            # mostrando os valores na Tabela
+            mostrar_alunos = app.mostrar_alunos()
+            mostrar_alunos()
+
+
+        # funcao procurar
+        def procurar():
+            global imagem, imagem_string, l_imagem
+
+            # obtendo o id
+            id_aluno = int(self.pesquisar_entry.get())
+
+            # search for a student by id
+            dados = Sistema_De_Vendas.procurar_clientes(id_aluno)
+
+            # limpando os campos de entradas
+            self.nome_entry.delete(0,END)
+            self.email_entry.delete(0,END)
+            self.telefone_entry.delete(0,END)
+            #self.genero_combobox.delete(0,END)
+            self.data_nascimento_entry.delete(0,END)
+            self.endereco_entry.delete(0,END)
+            self.bairro_entry.delete(0,END)
+
+            # inserindo os valores
+            self.nome_entry.insert(END,dados[1])
+            self.email_entry.insert(END,dados[2])
+            self.telefone_entry.insert(END,dados[3])
+            #self.genero_combobox.insert(END,dados[4])
+            self.data_nascimento_entry.insert(END,dados[5])
+            self.endereco_entry.insert(END,dados[6])
+            self.bairro_entry.insert(END,dados[7])
+            # img = imagem_string
+
+            imagem = dados[8]
+            imagem_string = imagem
+
+            # abrindo a imagem
+            imagem  = Image.open(imagem)
+            imagem = imagem.resize((130, 130))
+            imagem = ImageTk.PhotoImage(imagem)
+
+            l_imagem = Label(self.tabview.tab("Clientes"), image=imagem)
+            l_imagem.place(x=390, y=10)
+
+
+        # funcao atualizar
+        def atualizar():
+            global imagem, imagem_string, l_imagem
+
+            # obtendo o id
+            id_aluno = int(self.pesquisar_entry.get())
+
+            # obtendo os valores
+            nome = self.nome_entry.get()
+            email = self.email_entry.get()
+            tel = self.telefone_entry.get()
+            sexo = self.genero_combobox.get()
+            data = self.data_nascimento_entry.get()
+            endereco = self.endereco_entry.get()
+            curso = self.bairro_entry.get()
+            img = imagem_string
+
+            lista = [nome,email,tel, sexo, data, endereco, curso, img, id_aluno]
+
+            # Verificando caso algum campo esteja vazio ou nao
+            for i in lista:
+                if i=='':
+                    messagebox.showerror('Erro', 'Preencha todos os campos')
+                    return
+
+            # update the student
+            Sistema_De_Vendas.atualizar_clientes(lista)
+
+            # limpando os campos de entradas
+            self.nome_entry.delete(0,END)
+            self.email_entry.delete(0,END)
+            self.telefone_entry.delete(0,END)
+            self.genero_combobox.delete(0,END)
+            self.data_nascimento_entry.delete(0,END)
+            self.endereco_entry.delete(0,END)
+            self.bairro_entry.delete(0,END)
+
+            # abrindo a imagem
+            imagem  = Image.open('logo.png')
+            imagem = imagem.resize((130, 130))
+            imagem = ImageTk.PhotoImage(imagem)
+
+            l_imagem = Label(self.tabview.tab("Clientes"), image=imagem)
+            l_imagem.place(x=390, y=10)
+
+            # mostrando os valores na Tabela
+            mostrar_alunos = app.mostrar_alunos()
+            mostrar_alunos()
+            
+
+        # funcao deletar
+        def deletar():
+            global imagem, imagem_string, l_imagem
+
+            # obtendo o id
+            id_aluno = int(self.pesquisar_entry.get())
+
+            # delete a student by id
+            Sistema_De_Vendas.deletar_clientes(id_aluno)
+
+            # limpando os campos de entradas
+            self.nome_entry.delete(0,END)
+            self.email_entry.delete(0,END)
+            self.telefone_entry.delete(0,END)
+            self.genero_combobox.delete(0,END)
+            self.data_nascimento_entry.delete(0,END)
+            self.endereco_entry.delete(0,END)
+            self.bairro_entry.delete(0,END)
+
+            self.pesquisar_entry.delete(0,END)
+
+            # abrindo a imagem
+            imagem  = Image.open('logo.png')
+            imagem = imagem.resize((130, 130))
+            imagem = ImageTk.PhotoImage(imagem)
+
+            l_imagem = Label(self.tabview.tab("Clientes"), image=imagem)
+            l_imagem.place(x=390, y=10)
+
+            # mostrando os valores na Tabela
+            mostrar_alunos = app.mostrar_alunos()
+            mostrar_alunos()
+
+            
+
+        #----------------------------------------------------------------
+        #variáveis da tabela cliente
+        self.cpf_value = StringVar()
+        self.nome_value = StringVar()
+        self.telefone_value = StringVar()
+        self.data_nascimento_value = StringVar()
+        self.endereco_value = StringVar()
+
+        imagem = Image.open('adolescente.png')
+        imagem = imagem.resize((150,150))
+        imagem_rotacionada = imagem.rotate(0)
+        imagem = ImageTk.PhotoImage(imagem_rotacionada)
+        l_imagem = Label(self.tabview.tab("Clientes"), image=imagem, border=5).place(x=35, y=210)
+        l_imagem = imagem_rotacionada
+
+        #criando a tela Clientes - widgets
+        self.tela_clientes = ctk.CTkLabel(self.tabview.tab("Clientes"), text="Cadastro de clientes", font=("Century Gothic bold", 20))
+        
+        self.lb_email = ctk.CTkLabel(self.tabview.tab("Clientes"), text="Email", font=("century gothic bold", 16), text_color=['#000', '#fff'])
+        
+        self.lb_nome = ctk.CTkLabel(self.tabview.tab("Clientes"), text="Nome completo", font=("century gothic bold", 16), text_color=['#000', '#fff'])
+        
+        self.lb_telefone = ctk.CTkLabel(self.tabview.tab("Clientes"), text="Telefone", font=("century gothic bold", 16), text_color=['#000', '#fff'])
+
+        self.lb_pesquisar = ctk.CTkLabel(self.tabview.tab("Clientes"), text="Pesquisar", font=("century gothic bold", 16), text_color=['#000', '#fff'])
+
+        self.lb_bairro = ctk.CTkLabel(self.tabview.tab("Clientes"), text="Bairro", font=("century gothic bold", 16), text_color=['#000', '#fff'])
+        
+        self.lb_genero = ctk.CTkLabel(self.tabview.tab("Clientes"), text="Gênero", font=("century gothic bold", 16), text_color=['#000', '#fff'])
+        
+        self.lb_data_nascimento = ctk.CTkLabel(self.tabview.tab("Clientes"), text="Data de nascimento", font=("century gothic bold", 16), text_color=['#000', '#fff'])
+        
+        self.lb_endereco = ctk.CTkLabel(self.tabview.tab("Clientes"), text="Endereço", font=("century gothic bold", 16), text_color=['#000', '#fff'])
+        
+        self.cli_btn_deletar = ctk.CTkButton(self.tabview.tab("Clientes"), text="Deletar".upper(),command=deletar, font=("Century Gothic bold", 14), fg_color="#555", hover_color="#777")
+        
+        self.cli_btn_salvar = ctk.CTkButton(self.tabview.tab("Clientes"), text="Salvar".upper(), command=adicionar, font=("Century Gothic bold", 14), fg_color="#151", hover_color="#181")
+        
+        self.cli_btn_sair = ctk.CTkButton(self.tabview.tab("Clientes"), text="Sair".upper(), font=("Century Gothic bold", 14),fg_color="#8B0000", hover_color="#B22222", command=exit)
+        
+        self.btn_atualizar = ctk.CTkButton(self.tabview.tab("Clientes"), text="Atualizar".upper(),font=("Century Gothic bold", 14), fg_color="#555", command=atualizar, hover_color="#777")
+
+        self.btn_pesquisar = ctk.CTkButton(self.tabview.tab("Clientes"), text="Pesquisar".upper(), font=("Century Gothic bold", 14), fg_color="#555", command=procurar,width=200, hover_color="#777")
+
+        #entry tela clientes
+        self.email_entry = ctk.CTkEntry(self.tabview.tab("Clientes"), width=200, textvariable=self.cpf_value, font=("Century Gothic bold", 16), fg_color="transparent")
+        
+        self.nome_entry = ctk.CTkEntry(self.tabview.tab("Clientes"), width=350, textvariable=self.nome_value, font=("Century Gothic bold", 16), fg_color="transparent")
+        
+        self.telefone_entry = ctk.CTkEntry(self.tabview.tab("Clientes"), width=200, textvariable=self.telefone_value, font=("Century Gothic bold", 16), fg_color="transparent")
+
+        self.bairro_entry = ctk.CTkEntry(self.tabview.tab("Clientes"), width=200, font=("Century Gothic bold", 16), fg_color="transparent")
+
+        self.pesquisar_entry = ctk.CTkEntry(self.tabview.tab("Clientes"), width=200, font=("Century Gothic bold", 16), fg_color="transparent")
+        
+        self.data_nascimento_entry = DateEntry(self.tabview.tab("Clientes"), width=8, textvariable=self.data_nascimento_value, background='black',foreground='white', font=("Century Gothic bold", 16), year=2024)
+        
+        self.endereco_entry = ctk.CTkEntry(self.tabview.tab("Clientes"), width=350, textvariable=self.endereco_value, font=("Century Gothic bold", 16), fg_color="transparent")       
+        
+        self.genero_combobox = ctk.CTkComboBox(self.tabview.tab("Clientes"), values=["Cisgênero", "Transgênero", "Não-binário"], font=("century gothic bold", 14))
+        self.genero_combobox.set("")
+
+        #self.picture = ctk.CTkFrame(self.tabview.tab("Clientes"), width=140, height=140, fg_color="#C0C0C0").place(x=230, y=190)
+
+        #Posicionando os widgets da tela Clientes
+        self.tela_clientes.pack() 
+        self.lb_nome.place(x=25, y=30) #label
+        self.nome_entry.place(x=25, y=60) #Entry
+        self.lb_email.place(x=450, y=30) #label       
+        self.email_entry.place(x=450, y=60) #Entry
+        self.lb_telefone.place(x=450, y=95) #label
+        self.lb_bairro.place(x=450, y=160) #label
+        self.bairro_entry.place(x=450, y=190) #Entry
+        self.telefone_entry.place(x=450, y=125) #Entry
+        self.lb_pesquisar.place(x=450, y=225) #label
+        self.pesquisar_entry.place(x=450, y=255) #Entry
+        self.btn_pesquisar.place(x=450, y=290) #Botão pesquisar
+        self.lb_genero.place(x=210, y=165) #label
+        self.genero_combobox.place(x=210, y=195) #Combobox
+        self.lb_data_nascimento.place(x=210, y=230) #label
+        self.data_nascimento_entry.place(x=265, y=330) #Entry
+        self.lb_endereco.place(x=25, y=95) #label
+        self.endereco_entry.place(x=25, y=125) #Entry
+        self.cli_btn_deletar.place(x=60, y=538) #Botão Deletar
+        self.cli_btn_salvar.place(x=360, y=538) #Botão Salvar
+        self.btn_atualizar.place(x=210, y=538) #Botão limpar
+        self.cli_btn_sair.place(x=510, y=538) #Botão sair
+
+        def escolher_imagem():
+            global imagem, imagem_string, l_imagem
+
+            imagem = fd.askopenfilenames()
+            imagem_string=imagem[0] if imagem else None
+
+            if imagem_string:
+                imagem = Image.open(imagem_string)
+                imagem = imagem.resize((150,150))
+                imagem_rotacionada = imagem.rotate(90)
+                imagem = ImageTk.PhotoImage(imagem_rotacionada)
+                l_imagem = Label(self.tabview.tab("Clientes"), image=imagem, border=5).place(x=37, y=210)
+                l_imagem = imagem_rotacionada
+            else:
+                messagebox.showinfo('Imagem', 'Nenhuma foto selecionada!')
+
+        btn_foto = ctk.CTkButton(self.tabview.tab("Clientes"), text="Carregar foto".upper(), command=escolher_imagem, font=("Century Gothic bold", 14), fg_color="#555", hover_color="#777",)
+        btn_foto.place(x=25, y=305) #Botão carregar foto
+
+
+
+#Executando 
+if __name__ == "__main__": 
+    app = App()
+    app.mainloop()
