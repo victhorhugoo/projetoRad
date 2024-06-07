@@ -1,0 +1,71 @@
+import sqlite3
+from tkinter import messagebox
+import customtkinter
+
+class SistemaDeVendas:
+    def __init__(self):
+        self.conn =sqlite3.connect('C:/Banco_Aplicat_Python/vendass.db')
+        self.c = self.conn.cursor()
+        self.create_table()
+
+    def create_table(self):
+        self.c.execute('''CREATE TABLE IF NOT EXISTS clientes(
+                       id INTEGER PRIMARY KEY AUTOINCREMENT,
+                       nome TEXT NOT NULL,
+                       email TEXT NOT NULL,
+                       telefone TEXT NOT NULL,
+                       genero TEXT NOT NULL,
+                       data_nascimento TEXT NOT NULL,
+                       endereco NOT NULL,
+                       bairro TEXT NOT NULL,
+                       picture TEXT )
+                       ''')
+    
+    def registrar_clientes(self, clientes):
+        self.c.execute("INSERT INTO clientes(nome, email, telefone, genero, data_nascimento, endereco, bairro) VALUES(?,?,?,?,?,?,?)", (clientes))
+        self.conn.commit()
+        messagebox.showinfo('Sucesso', 'Inserido com sucesso')
+
+    def exibir_clientes(self):
+        self.c.execute("SELECT * FROM clientes")
+        dados = self.c.fetchall()
+
+        return dados
+
+    def procurar_clientes(self, id):
+        self.c.execute("SELECT * FROM clientes WHERE id=?", (id,))
+        dados = self.c.fetchone()
+        
+        return dados
+
+    def atualizar_clientes(self, novos_valores):
+        query = "UPDATE clientes SET nome=?, email=?, telefone=?, genero=?, data_nascimento=?, endereco=?, bairro=?, picture=? WHERE id=? "
+        self.c.execute(query,novos_valores)
+        self.conn.commit()
+        messagebox.showinfo('Sucesso', f'Cliente com o ID:{novos_valores[8]} foi atualizado!')
+
+    def deletar_clientes(self, id):
+        self.c.execute("DELETE FROM clientes WHERE id=?", (id,))
+        self.conn.commit()
+        messagebox.showinfo('Sucesso', f'Cliente com ID:{id}, foi deletado!')
+
+#criando uma instância do sistema de registro 
+Sistema_De_Vendas = SistemaDeVendas()
+
+#informações dos clientes
+#cliente = ('Joao', 'joao@gmail.com', '21987456666', 'masculino', '04/06/1996', 'Rua da Flores', 'Jardim da fonte', 'imagem.png')
+#Sistema_De_Vendas.registrar_clientes(cliente)
+
+#exibir clientes
+#lista_clientes = Sistema_De_Vendas.exibir_clientes()
+
+#pesquisar clientes
+#pesquisar = Sistema_De_Vendas.procurar_clientes(2)
+
+#atualizar clientes
+#cliente = ('Joao', 'joao@gmail.com', '2198745336', 'masculino', '04/06/1996', 'Rua da areia', 'Jardim da fonte', 'imagem.png', 1)
+#atualizar = Sistema_De_Vendas.atualizar_clientes(cliente)
+
+#deletar clientes
+#Sistema_De_Vendas.deletar_clientes(2)
+    
